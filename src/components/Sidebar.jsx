@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Link as LinkIcon, Users, Settings as SettingsIcon, LogOut } from 'lucide-react';
+import { LayoutDashboard, Link as LinkIcon, Users, Settings as SettingsIcon, LogOut, Bell } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase/config';
 
@@ -15,6 +15,7 @@ export default function Sidebar() {
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Manage Links', path: '/links', icon: LinkIcon },
     { name: 'Manage Users', path: '/users', icon: Users },
+    { name: 'Notifications', path: '/notify', icon: Bell },
     { name: 'Settings', path: '/settings', icon: SettingsIcon },
   ];
 
