@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ManageLinks from './pages/ManageLinks';
 import ManageUsers from './pages/ManageUsers';
+import PremiumRequests from './pages/PremiumRequests';
 import Settings from './pages/Settings';
 import SendNotification from './pages/SendNotification';
 
@@ -23,18 +24,19 @@ function App() {
     return () => unsubscribe();
   }, []);
 
-  if (loading) return <div className="flex h-screen items-center justify-center text-primary text-xl font-bold">Loading WP BOOSTUP...</div>;
+  if (loading) return <div className="flex h-screen items-center justify-center text-primary text-xl font-bold">Loading WP BOOSTUP Admin...</div>;
 
   return (
     <BrowserRouter>
       {user ? (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex h-screen bg-gray-50">
           <Sidebar />
           <div className="flex-1 overflow-y-auto p-8">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/links" element={<ManageLinks />} />
               <Route path="/users" element={<ManageUsers />} />
+              <Route path="/premium-requests" element={<PremiumRequests />} />
               <Route path="/notify" element={<SendNotification />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/" />} />
