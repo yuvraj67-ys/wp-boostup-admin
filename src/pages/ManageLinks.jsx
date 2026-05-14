@@ -4,7 +4,7 @@ import { db } from '../firebase/config';
 
 export default function ManageLinks() {
   const [links, setLinks] = useState([]);
-  const [filter, setFilter] = useState('pending'); // pending, approved, rejected
+  const [filter, setFilter] = useState('pending');
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "Links"), (snapshot) => {
@@ -18,21 +18,17 @@ export default function ManageLinks() {
 
   const updateStatus = async (linkId, uid, newStatus, linkTitle) => {
     try {
-      // 1. Update Link Status in Firestore
       await updateDoc(doc(db, "Links", linkId), { status: newStatus });
 
-      // 2. Fetch the User's Device Token
       const userDoc = await getDoc(doc(db, "Users", uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
         if (userData.deviceToken) {
-          
-          // 3. Set Message Details
           const notificationTitle = newStatus === 'approved' ? 'Link Approved! 🎉' : 'Link Rejected ❌';
           const notificationBody = `Your link "${linkTitle}" has been ${newStatus}.`;
 
-          // 4. Trigger Vercel API to send Push Notification
-          await fetch('/api/notify', {
+          // Trigger Vercel API Notification (Non-blocking)
+          fetch('/api/notify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -40,7 +36,7 @@ export default function ManageLinks() {
               title: notificationTitle,
               body: notificationBody
             })
-          });
+          }).catch(err => console.log("Push notification silent failure:", err));
         }
       }
     } catch (error) {
@@ -79,6 +75,7 @@ export default function ManageLinks() {
             <tr>
               <th className="p-4">Image & Title</th>
               <th className="p-4">Type</th>
+              <th className="p-4">Status Tag</th>
               <th className="p-4">Actions</th>
             </tr>
           </thead>
@@ -92,6 +89,13 @@ export default function ManageLinks() {
                   </div>
                 </td>
                 <td className="p-4 text-sm text-gray-500">{link.type}</td>
+                <td className="p-4 text-sm">
+                  {link.isPromoted ? (
+                    <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold">PROMOTED</span>
+                  ) : (
+                    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">FREE</span>
+                  )}
+                </td>
                 <td className="p-4 flex gap-2">
                   {filter === 'pending' && (
                     <>
