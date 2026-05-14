@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import ManageLinks from './pages/ManageLinks';
 import ManageUsers from './pages/ManageUsers';
 import Settings from './pages/Settings';
+import SendNotification from './pages/SendNotification';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -34,6 +35,7 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/links" element={<ManageLinks />} />
               <Route path="/users" element={<ManageUsers />} />
+              <Route path="/notify" element={<SendNotification />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
