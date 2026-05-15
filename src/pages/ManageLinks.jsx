@@ -48,9 +48,31 @@ export default function ManageLinks() {
   };
 
   // ADD LINK FUNCTION
+  // ADD LINK FUNCTION WITH AUTO DP FETCH
   const handleAddLink = async (e) => {
     e.preventDefault();
     try {
+      setIsModalOpen(false); // Close modal immediately
+      
+      let finalPicUrl = newLink.profilePicUrl;
+      
+      // FIX: Auto fetch profile pic using a proxy if not provided
+      if (!finalPicUrl && newLink.url) {
+        try {
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(newLink.url)}`;
+          const response = await fetch(proxyUrl);
+          const data = await response.json();
+          const match = data.contents.match(/<meta property="og:image" content="([^"]+)"/);
+          if (match && match[1]) {
+            finalPicUrl = match[1];
+          } else {
+            finalPicUrl = "https://i.ibb.co/4pDNDk1/avatar-contact.png";
+          }
+        } catch (err) {
+          finalPicUrl = "https://i.ibb.co/4pDNDk1/avatar-contact.png";
+        }
+      }
+
       const linkId = "admin_" + Date.now();
       await setDoc(doc(db, "Links", linkId), {
         linkId: linkId,
@@ -59,14 +81,13 @@ export default function ManageLinks() {
         url: newLink.url,
         type: newLink.type,
         category: newLink.category,
-        profilePicUrl: newLink.profilePicUrl || "https://i.ibb.co/4pDNDk1/avatar-contact.png", // Default image
+        profilePicUrl: finalPicUrl,
         isPromoted: newLink.isPromoted,
-        status: "approved", // Directly approved
+        status: "approved",
         viewsCount: 0,
         timestamp: Date.now()
       });
-      alert("Link Added Successfully and is now Live!");
-      setIsModalOpen(false);
+      alert("Link Added Successfully with Image!");
       setNewLink({ title: '', url: '', type: 'Group', category: 'Technology', profilePicUrl: '', isPromoted: false });
     } catch (error) {
       alert("Failed to add link: " + error.message);
