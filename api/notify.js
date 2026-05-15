@@ -10,7 +10,7 @@ if (!admin.apps.length) {
       }),
     });
   } catch (error) {
-    console.error('Firebase init error', error);
+    console.error('Firebase admin init error', error);
   }
 }
 
@@ -20,7 +20,8 @@ export default async function handler(req, res) {
   const { deviceToken, tokens, title, body, actionUrl, imageUrl } = req.body;
 
   try {
-    // FIX: Sending ONLY data payload. This stops duplicate notifications completely!
+    // FIX: Send ONLY data payload. NO 'notification' object.
+    // This forces Android to wake up FCMService.kt and use our custom icon & image!
     const message = {
       data: {
         title: title || 'WP BOOSTUP',
