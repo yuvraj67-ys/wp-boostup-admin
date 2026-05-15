@@ -1,6 +1,5 @@
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
 if (!admin.apps.length) {
   try {
     admin.initializeApp({
@@ -11,42 +10,31 @@ if (!admin.apps.length) {
       }),
     });
   } catch (error) {
-    console.error('Firebase admin initialization error', error.stack);
+    console.error('Firebase init error', error);
   }
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { deviceToken, tokens, title, body, actionUrl, imageUrl } = req.body;
 
   try {
+    // FIX: Sending ONLY data payload. This stops duplicate notifications completely!
     const message = {
-      notification: { title, body },
-      data: {}
+      data: {
+        title: title || 'WP BOOSTUP',
+        body: body || '',
+        url: actionUrl || '',
+        image: imageUrl || ''
+      }
     };
 
-    // Add Image if provided
-    if (imageUrl) {
-      message.notification.imageUrl = imageUrl;
-    }
-    
-    // Add Click Action URL in Data Payload
-    if (actionUrl) {
-      message.data.url = actionUrl;
-    }
-
     let response;
-
-    // Send to multiple users (Global Push)
     if (tokens && Array.isArray(tokens) && tokens.length > 0) {
       message.tokens = tokens;
       response = await admin.messaging().sendEachForMulticast(message);
-    } 
-    // Send to single user
-    else if (deviceToken) {
+    } else if (deviceToken) {
       message.token = deviceToken;
       response = await admin.messaging().send(message);
     } else {
@@ -55,7 +43,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ success: true, response });
   } catch (error) {
-    console.error('Error sending message:', error);
     return res.status(500).json({ error: error.message });
   }
 }
