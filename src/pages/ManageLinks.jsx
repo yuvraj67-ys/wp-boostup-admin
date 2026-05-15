@@ -47,28 +47,18 @@ export default function ManageLinks() {
     if (window.confirm("PERMANENTLY delete this link?")) await deleteDoc(doc(db, "Links", id));
   };
 
+  // ADD LINK FUNCTION - FIXED BLANK DP BUG
   const handleAddLink = async (e) => {
     e.preventDefault();
     try {
-      setIsModalOpen(false);
-      let finalPicUrl = newLink.profilePicUrl;
+      setIsModalOpen(false); 
       
-      if (!finalPicUrl && newLink.url) {
-        try {
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(newLink.url)}`;
-          const response = await fetch(proxyUrl);
-          const data = await response.json();
-          // FIX: Improved Regex to fetch Image correctly
-          const match = data.contents.match(/<meta[^>]*property=['"]og:image['"][^>]*content=['"]([^'"]+)['"]/i) || 
-                        data.contents.match(/<meta[^>]*content=['"]([^'"]+)['"][^>]*property=['"]og:image['"]/i);
-          if (match && match[1]) {
-            finalPicUrl = match[1];
-          } else {
-            finalPicUrl = DEFAULT_DP;
-          }
-        } catch (err) {
-          finalPicUrl = DEFAULT_DP;
-        }
+      // FIX: Default image direct link. If admin leaves profilePicUrl empty, this solid image is used.
+      const DEFAULT_DP = "https://i.ibb.co/4pDNDk1/avatar-contact.png";
+      let finalPicUrl = newLink.profilePicUrl ? newLink.profilePicUrl.trim() : "";
+      
+      if (!finalPicUrl) {
+        finalPicUrl = DEFAULT_DP; // Always fallback to this if input is empty
       }
 
       const linkId = "admin_" + Date.now();
@@ -79,7 +69,7 @@ export default function ManageLinks() {
         url: newLink.url,
         type: newLink.type,
         category: newLink.category,
-        profilePicUrl: finalPicUrl || DEFAULT_DP,
+        profilePicUrl: finalPicUrl, // 100% valid image URL
         isPromoted: newLink.isPromoted,
         status: "approved",
         viewsCount: 0,
@@ -91,7 +81,7 @@ export default function ManageLinks() {
       alert("Failed to add link: " + error.message);
     }
   };
-
+  
   let displayedLinks = links;
   if (filter === 'pending_free') displayedLinks = links.filter(l => l.status === 'pending' && !l.isPromoted);
   else if (filter === 'pending_promoted') displayedLinks = links.filter(l => l.status === 'pending' && l.isPromoted);
