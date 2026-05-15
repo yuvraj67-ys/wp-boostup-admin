@@ -8,11 +8,11 @@ export default function ManageLinks() {
   const [filter, setFilter] = useState('pending_free');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // State for Add Link Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newLink, setNewLink] = useState({ title: '', url: '', type: 'Group', category: 'Technology', profilePicUrl: '', isPromoted: false });
 
   const categories = ["Technology", "Entertainment", "Education", "Gaming", "News & Politics", "Sports", "Health & Fitness", "Finance & Crypto", "Music & Audio", "Lifestyle & Fashion", "Shopping & Offers", "Funny & Memes", "Other"];
+  const DEFAULT_DP = "https://i.ibb.co/4pDNDk1/avatar-contact.png";
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "Links"), (snapshot) => {
@@ -47,29 +47,27 @@ export default function ManageLinks() {
     if (window.confirm("PERMANENTLY delete this link?")) await deleteDoc(doc(db, "Links", id));
   };
 
-  // ADD LINK FUNCTION
-  // ADD LINK FUNCTION WITH AUTO DP FETCH
   const handleAddLink = async (e) => {
     e.preventDefault();
     try {
-      setIsModalOpen(false); // Close modal immediately
-      
+      setIsModalOpen(false);
       let finalPicUrl = newLink.profilePicUrl;
       
-      // FIX: Auto fetch profile pic using a proxy if not provided
       if (!finalPicUrl && newLink.url) {
         try {
           const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(newLink.url)}`;
           const response = await fetch(proxyUrl);
           const data = await response.json();
-          const match = data.contents.match(/<meta property="og:image" content="([^"]+)"/);
+          // FIX: Improved Regex to fetch Image correctly
+          const match = data.contents.match(/<meta[^>]*property=['"]og:image['"][^>]*content=['"]([^'"]+)['"]/i) || 
+                        data.contents.match(/<meta[^>]*content=['"]([^'"]+)['"][^>]*property=['"]og:image['"]/i);
           if (match && match[1]) {
             finalPicUrl = match[1];
           } else {
-            finalPicUrl = "https://i.ibb.co/4pDNDk1/avatar-contact.png";
+            finalPicUrl = DEFAULT_DP;
           }
         } catch (err) {
-          finalPicUrl = "https://i.ibb.co/4pDNDk1/avatar-contact.png";
+          finalPicUrl = DEFAULT_DP;
         }
       }
 
@@ -81,13 +79,13 @@ export default function ManageLinks() {
         url: newLink.url,
         type: newLink.type,
         category: newLink.category,
-        profilePicUrl: finalPicUrl,
+        profilePicUrl: finalPicUrl || DEFAULT_DP,
         isPromoted: newLink.isPromoted,
         status: "approved",
         viewsCount: 0,
         timestamp: Date.now()
       });
-      alert("Link Added Successfully with Image!");
+      alert("Link Added Successfully!");
       setNewLink({ title: '', url: '', type: 'Group', category: 'Technology', profilePicUrl: '', isPromoted: false });
     } catch (error) {
       alert("Failed to add link: " + error.message);
@@ -144,7 +142,13 @@ export default function ManageLinks() {
             ) : displayedLinks.map((link) => (
               <tr key={link.id} className="border-b border-gray-50 hover:bg-blue-50/50">
                 <td className="p-4 flex items-center space-x-4">
-                  <img src={link.profilePicUrl} alt="DP" className="w-12 h-12 rounded-full object-cover bg-gray-200 border border-gray-200" />
+                  {/* FIX: Added onError to handle broken image links automatically */}
+                  <img 
+                    src={link.profilePicUrl || DEFAULT_DP} 
+                    onError={(e) => { e.target.onerror = null; e.target.src = DEFAULT_DP; }}
+                    alt="DP" 
+                    className="w-12 h-12 rounded-full object-cover bg-gray-200 border border-gray-200" 
+                  />
                   <div>
                     <a href={link.url} target="_blank" rel="noreferrer" className="font-bold text-gray-900 hover:text-blue-600 hover:underline">{link.title}</a>
                     <p className="text-xs text-gray-400 font-mono mt-1">UID: {link.uid === 'admin' ? 'ADMIN' : link.uid.substring(0,8)}</p>
@@ -173,7 +177,6 @@ export default function ManageLinks() {
         </table>
       </div>
 
-      {/* Add Link Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
@@ -184,7 +187,7 @@ export default function ManageLinks() {
             <form onSubmit={handleAddLink} className="space-y-4">
               <input type="text" placeholder="Title" required value={newLink.title} onChange={e => setNewLink({...newLink, title: e.target.value})} className="w-full p-3 border rounded-lg" />
               <input type="url" placeholder="WhatsApp URL (chat.whatsapp.com...)" required value={newLink.url} onChange={e => setNewLink({...newLink, url: e.target.value})} className="w-full p-3 border rounded-lg" />
-              <input type="url" placeholder="Image URL (Optional)" value={newLink.profilePicUrl} onChange={e => setNewLink({...newLink, profilePicUrl: e.target.value})} className="w-full p-3 border rounded-lg text-sm" />
+              <input type="url" placeholder="Image URL (Optional - Auto fetch if empty)" value={newLink.profilePicUrl} onChange={e => setNewLink({...newLink, profilePicUrl: e.target.value})} className="w-full p-3 border rounded-lg text-sm" />
               
               <div className="flex gap-4">
                 <select value={newLink.type} onChange={e => setNewLink({...newLink, type: e.target.value})} className="w-1/2 p-3 border rounded-lg bg-white">
